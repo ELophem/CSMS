@@ -23,4 +23,4 @@ In the actual context of energy transition network operators want to be able to 
 
 
 
-&copy; Edouard de Schietere de Lophem
+&copy; ELophem
