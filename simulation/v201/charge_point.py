@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime, timedelta
 
 from ocpp.v201.enums import RegistrationStatusType
 import logging
@@ -6,7 +7,6 @@ import websockets
 
 from ocpp.v201 import call
 from ocpp.routing import on
-from ocpp.v201 import call_result
 from ocpp.v201 import ChargePoint as cp1
 
 logging.basicConfig(level=logging.INFO)
@@ -17,7 +17,11 @@ class ChargePoint(cp1):
         request = call.Heartbeat()
         while True:
             await self.call(request)
-            await asyncio.sleep(interval)
+            await asyncio.gather(
+                self.send_meter_values(),  # Send meter values
+                asyncio.sleep(interval)    # Wait for heartbeat interval
+            )
+
 
     async def send_boot_notification(self):
         request = call.BootNotification(
@@ -32,60 +36,47 @@ class ChargePoint(cp1):
         if response.status == RegistrationStatusType.accepted:
             print("Connected to central system.")
             await self.send_heartbeat(response.interval)
-    
+
+    # async def send_status_notification(self):
+    #     request = call.StatusNotification(
+    #         timestamp=datetime.utcnow().isoformat() + "Z",  # Ensure UTC format with 'Z' suffix
+    #         connector_status="Available",
+    #         evse_id=1,
+    #         connector_id=1
+    #     )
+    #     await self.call(request)
 
     async def send_meter_values(self):
         request = call.MeterValues(
             evse_id=1,
             meter_value=[
-            {
-            "timestamp": "2024-05-07T00:00:00Z",
-            "sampledValue": [
                 {
-                "value": 100.5,
-                "measurand": "Energy.Active.Import.Register",
-                "unitOfMeasure": {
-                    "unit": "Wh",
-                    "multiplier": 0
-                },
-                "location": "Outlet",
-                "context": "Sample.Periodic"
+                    "timestamp": datetime.utcnow().isoformat() + "Z",  # Ensure UTC format with 'Z' suffix
+                    "sampled_value": [
+                        {
+                            "value": 100.5,
+                            "measurand": "Energy.Active.Import.Register",
+                            "unit_of_measure": {
+                                "unit": "Wh",
+                                "multiplier": 0
+                            },
+                            "location": "Outlet",
+                            "context": "Sample.Periodic"
+                        }
+                    ]
                 }
             ]
-            }
-        ]
         )
-        response = await self.call(request)
-    
-    async def send_status_notification(self):
-        request = call.StatusNotification(
-
-        timestamp="2024-05-07T12:34:56Z",  
-        connector_status="Available",  
-        evse_id=1,  
-        connector_id=1  
-
-        )
-        response = await self.call(request)
-    
-    @on("StatusNotification")
-    def on_status_notification(self, **kwargs):
-        print("Received StatusNotification from CSMS:", kwargs)
-       
-        timestamp = kwargs.get('timestamp')
-        connector_status = kwargs.get('connectorStatus')
-        evse_id = kwargs.get('evseId')
-        connector_id = kwargs.get('connectorId')
-
-        # Add the logic to handle the status notification from the CSMS
-        return call_result.StatusNotification()
+        await self.call(request)
 
 
-
-
- 
-
-
+    async def periodic_tasks(self):
+        while True:
+            await asyncio.gather(
+                # self.send_status_notification(),
+                self.send_meter_values()
+            )
+            await asyncio.sleep(60)  # Adjust interval as needed
 
 
 async def main():
@@ -95,9 +86,8 @@ async def main():
     ) as ws:
         cp1 = ChargePoint('CP_1', ws)
 
-        await asyncio.gather(cp1.start(), cp1.send_boot_notification(),  cp1.send_status_notification(), cp1.send_meter_values())
-        
+        await asyncio.gather(cp1.start(), cp1.send_boot_notification(), cp1.periodic_tasks())
 
-        
+
 if __name__ == '__main__':
     asyncio.run(main())

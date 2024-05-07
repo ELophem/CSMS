@@ -1,54 +1,96 @@
 import React, { useState, useEffect } from 'react';
+import webSocketService from './WebSocketService';
 
 const ChargingPoints = () => {
-  const [connected1, setConnected1] = useState(false);
-  const [connected2, setConnected2] = useState(false);
+  const [chargingStations, setChargingStations] = useState({});
+  const [totalConsumed, setTotalConsumed] = useState(0); // State variable for total consumed energy
 
   useEffect(() => {
-    const socket1 = new WebSocket('ws://localhost:9000/CP_1', 'ocpp2.0.1');
-    const socket2 = new WebSocket('ws://localhost:9000/CP_2', 'ocpp2.0.1');
+    const clientId = "RC_123"; // Replace "123" with your actual client ID
+    webSocketService.connect(clientId);
 
-    socket1.onopen = () => {
-      console.log('WebSocket connection to CP_1 established.');
-      setConnected1(true);
+    const listener = (event) => {
+      if (event && event.data) {
+        console.log('Received message:', event.data);
+        try {
+          const data = JSON.parse(event.data);
+          if (data.messageType === "Heartbeat") {
+            const stationId = data.chargePointId;
+            console.log('Received Heartbeat message. Updating charging station:', stationId);
+            setChargingStations(prevStations => ({
+              ...prevStations,
+              [stationId]: { ...prevStations[stationId], id: stationId, connected: true },
+            }));
+          } else if (data.messageType === "MeterValues") {
+            const { stationId, meterValues } = data;
+            console.log('Received MeterValues message. Updating charging station:', stationId);
+            const updatedStations = {
+              ...chargingStations,
+              [stationId]: {
+                ...chargingStations[stationId],
+                meterValues: meterValues.map(value => ({
+                  timestamp: value.timestamp,
+                  value: value.sampled_value[0].value,
+                  unitOfMeasure: value.sampled_value[0].unit_of_measure.unit
+                }))
+              }
+            };
+            setChargingStations(updatedStations);
+
+            // Calculate total consumed energy
+            let total = 0;
+            Object.values(updatedStations).forEach(station => {
+              if (station.meterValues) {
+                station.meterValues.forEach(value => {
+                  total += value.value;
+                });
+              }
+            });
+            setTotalConsumed(total);
+          }
+        } catch (error) {
+          console.error('Error parsing message:', error);
+        }
+      }
     };
 
-    socket1.onclose = () => {
-      console.log('WebSocket connection to CP_1 closed.');
-      setConnected1(false);
-    };
-
-    socket1.onerror = (error) => {
-      console.error('WebSocket error on CP_1:', error);
-      setConnected1(false);
-    };
-
-    socket2.onopen = () => {
-      console.log('WebSocket connection to CP_2 established.');
-      setConnected2(true);
-    };
-
-    socket2.onclose = () => {
-      console.log('WebSocket connection to CP_2 closed.');
-      setConnected2(false);
-    };
-
-    socket2.onerror = (error) => {
-      console.error('WebSocket error on CP_2:', error);
-      setConnected2(false);
-    };
+    webSocketService.addEventListener(listener);
 
     return () => {
-      socket1.close();
-      socket2.close();
+      webSocketService.removeEventListener(listener);
     };
-  }, []);
+  }, [chargingStations]);
+
+  const handleStopTransaction = (stationId) => {
+    // Implement logic to send a message to stop transaction for the given station
+    console.log(`Stopping transaction for station ${stationId}`);
+  };
+
+  console.log('Charging stations:', chargingStations);
 
   return (
     <div>
-      <h1>WebSocket Connection Status</h1>
-      <p>CP_1: {connected1 ? 'Connected' : 'Disconnected'}</p>
-      <p>CP_2: {connected2 ? 'Connected' : 'Disconnected'}</p>
+      <h2>Active Charging Stations</h2>
+      <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+        {Object.values(chargingStations).map(station => (
+          <div key={station.id} style={{ border: '1px solid black', padding: '10px', margin: '10px' }}>
+            <h3>Charge Point: {station.id}</h3>
+            <p>Status: {station.connected ? 'Connected' : 'Disconnected'}</p>
+            {station.meterValues && (
+              <div>
+                {station.meterValues.map((value, index) => (
+                  <div key={index}>
+                    <p>Timestamp: {value.timestamp}</p>
+                    <p>Value: {value.value} {value.unitOfMeasure}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+            <button onClick={() => handleStopTransaction(station.id)}>Stop Transaction</button>
+          </div>
+        ))}
+      </div>
+      <h3>Total Consumed Energy: {totalConsumed} Wh</h3>
     </div>
   );
 };
