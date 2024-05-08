@@ -62,6 +62,10 @@ class ChargePoint(cp):
         await forward_message_to_react_clients(json_string)
         
         return call_result.MeterValues()
+    @on("StopTransaction")
+    async def onon():
+        return call_result.RequestStopTransaction
+        
 
 
 

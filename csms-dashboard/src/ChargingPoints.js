@@ -1,12 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import webSocketService from './WebSocketService';
 
+
+const formatTime = (timestamp) => {
+  const date = new Date(timestamp);
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  const seconds = date.getSeconds().toString().padStart(2, '0');
+  return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
+};
+
+
 const ChargingPoints = () => {
   const [chargingStations, setChargingStations] = useState({});
-  const [totalConsumed, setTotalConsumed] = useState(0); // State variable for total consumed energy
+  const [totalConsumed, setTotalConsumed] = useState(0); 
 
   useEffect(() => {
-    const clientId = "RC_123"; // Replace "123" with your actual client ID
+    const clientId = "RC_123"; 
     webSocketService.connect(clientId);
 
     const listener = (event) => {
@@ -80,9 +93,9 @@ const ChargingPoints = () => {
               <div>
                 {station.meterValues.map((value, index) => (
                   <div key={index}>
-                    <p>Timestamp: {value.timestamp}</p>
-                    <p>Value: {value.value} {value.unitOfMeasure}</p>
-                  </div>
+                  <p>Timestamp: {formatTime(value.timestamp)}</p>
+                  <p>Value: {value.value} {value.unitOfMeasure}</p>
+                </div>                
                 ))}
               </div>
             )}
