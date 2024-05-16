@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import webSocketService from './WebSocketService';
 
-
 const formatTime = (timestamp) => {
   const date = new Date(timestamp);
   const day = date.getDate().toString().padStart(2, '0');
@@ -13,10 +12,9 @@ const formatTime = (timestamp) => {
   return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
 };
 
-
 const ChargingPoints = () => {
   const [chargingStations, setChargingStations] = useState({});
-  const [totalConsumed, setTotalConsumed] = useState(0); 
+  const [totalConsumed, setTotalConsumed] = useState(0);
 
   useEffect(() => {
     const clientId = "RC_123"; 
@@ -60,6 +58,13 @@ const ChargingPoints = () => {
               }
             });
             setTotalConsumed(total);
+          } else if (data.messageType === "StatusNotification") {
+            const { stationId, connectorStatus } = data;
+            console.log('Received StatusNotification message. Updating charging station:', stationId);
+            setChargingStations(prevStations => ({
+              ...prevStations,
+              [stationId]: { ...prevStations[stationId], id: stationId, connectorStatus },
+            }));
           }
         } catch (error) {
           console.error('Error parsing message:', error);
@@ -89,13 +94,14 @@ const ChargingPoints = () => {
           <div key={station.id} style={{ border: '1px solid black', padding: '10px', margin: '10px' }}>
             <h3>Charge Point: {station.id}</h3>
             <p>Status: {station.connected ? 'Connected' : 'Disconnected'}</p>
+            <p>Connector Status: {station.connectorStatus}</p>
             {station.meterValues && (
               <div>
                 {station.meterValues.map((value, index) => (
                   <div key={index}>
-                  <p>Timestamp: {formatTime(value.timestamp)}</p>
-                  <p>Value: {value.value} {value.unitOfMeasure}</p>
-                </div>                
+                    <p>Timestamp: {formatTime(value.timestamp)}</p>
+                    <p>Value: {value.value} {value.unitOfMeasure}</p>
+                  </div>
                 ))}
               </div>
             )}

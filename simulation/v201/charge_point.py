@@ -1,7 +1,7 @@
 import asyncio
 from datetime import datetime, timedelta
 
-from ocpp.v201.enums import RegistrationStatusType
+from ocpp.v201.enums import RegistrationStatusType, ConnectorStatusType
 import logging
 import websockets
 
@@ -22,7 +22,6 @@ class ChargePoint(cp1):
                 asyncio.sleep(interval)    # Wait for heartbeat interval
             )
 
-
     async def send_boot_notification(self):
         request = call.BootNotification(
             reason="PowerUp",
@@ -37,24 +36,24 @@ class ChargePoint(cp1):
             print("Connected to central system.")
             await self.send_heartbeat(response.interval)
 
-    # async def send_status_notification(self):
-    #     request = call.StatusNotification(
-    #         timestamp=datetime.utcnow().isoformat() + "Z",  # Ensure UTC format with 'Z' suffix
-    #         connector_status="Available",
-    #         evse_id=1,
-    #         connector_id=1
-    #     )
-    #     await self.call(request)
+    async def send_status_notification(self):
+        request = call.StatusNotification(
+            timestamp=datetime.utcnow().isoformat() + "Z",  
+            connector_status=ConnectorStatusType.available,
+            evse_id=1,
+            connector_id=1
+        )
+        await self.call(request)
 
     async def send_meter_values(self):
         request = call.MeterValues(
             evse_id=1,
             meter_value=[
                 {
-                    "timestamp": datetime.utcnow().isoformat() + "Z",  # Ensure UTC format with 'Z' suffix
+                    "timestamp": datetime.utcnow().isoformat() + "Z",  
                     "sampled_value": [
                         {
-                            "value": 100.5,
+                            "value": 200.5,
                             "measurand": "Energy.Active.Import.Register",
                             "unit_of_measure": {
                                 "unit": "Wh",
@@ -69,14 +68,13 @@ class ChargePoint(cp1):
         )
         await self.call(request)
 
-
     async def periodic_tasks(self):
         while True:
             await asyncio.gather(
-                # self.send_status_notification(),
+                self.send_status_notification(),
                 self.send_meter_values()
             )
-            await asyncio.sleep(60)  # Adjust interval as needed
+            await asyncio.sleep(10)  # Adjust interval as needed
 
 
 async def main():

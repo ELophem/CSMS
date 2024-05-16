@@ -54,7 +54,7 @@ class ChargePoint(cp2):
                     "timestamp": datetime.utcnow().isoformat() + "Z",  # Ensure UTC format with 'Z' suffix
                     "sampled_value": [
                         {
-                            "value": 200.5,
+                            "value": 300,
                             "measurand": "Energy.Active.Import.Register",
                             "unit_of_measure": {
                                 "unit": "Wh",

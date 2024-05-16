@@ -15,8 +15,6 @@ logging.basicConfig(level=logging.INFO)
 connected_charge_points = {}
 connected_react_clients = {}
 
-
-
 async def forward_message_to_react_clients(message):
     # Forward the received message to all connected React clients
     for rc_ws in connected_react_clients.values():
@@ -48,34 +46,51 @@ class ChargePoint(cp):
         logging.info(f"EVSE ID: {evse_id}")
         logging.info(f"meter_value: {meter_value}")
         
-        # Construct JSON data including the charge point ID
         json_data = {
             "messageType" : "MeterValues",
             "stationId": self.id,
             "meterValues": meter_value
         }
         
-        # Convert JSON data to a string
+
         json_string = json.dumps(json_data)
         
         # Forward the message to React clients
         await forward_message_to_react_clients(json_string)
         
         return call_result.MeterValues()
-    @on("StopTransaction")
-    async def onon():
-        return call_result.RequestStopTransaction
+    
+    @on("StatusNotification")
+    async def on_status_notification(self, timestamp, connector_status, evse_id, connector_id, **kwargs):
+        logging.info(f"Received StatusNotification from Charge Point {self.id}")
+        logging.info(f"Timestamp: {timestamp}, Status: {connector_status}, EVSE ID: {evse_id}, Connector ID: {connector_id}")
+
+        json_data = {
+            "messageType": "StatusNotification",
+            "stationId": self.id,
+            "timestamp": timestamp,
+            "connectorStatus": connector_status,
+            "evseId": evse_id,
+            "connectorId": connector_id
+        }
+
+        json_string = json.dumps(json_data)
         
+        # Forward the message to React clients
+        await forward_message_to_react_clients(json_string)
 
+        return call_result.StatusNotification()
 
+    @on("StopTransaction")
+    async def on_stop_transaction(self):
+        return call_result.RequestStopTransaction()
+        
 
 async def on_connect(websocket, path):
     try:
-        requested_protocols = websocket.request_headers[
-            'Sec-WebSocket-Protocol']
+        requested_protocols = websocket.request_headers['Sec-WebSocket-Protocol']
     except KeyError:
-        logging.info("Client hasn't requested any Subprotocol. "
-                     "Closing Connection")
+        logging.info("Client hasn't requested any Subprotocol. Closing Connection")
         return await websocket.close()
 
     if websocket.subprotocol:
@@ -101,7 +116,7 @@ async def on_connect(websocket, path):
         await cp_instance.start()
     elif client_type == 'RC':  # React client
         connected_react_clients[client_id] = websocket
-        logging.info(f"React client connected: {client_id}")  # Add this line to log client connection
+        logging.info(f"React client connected: {client_id}")
 
     while True:
         try:
@@ -128,7 +143,6 @@ async def on_connect(websocket, path):
                 logging.info(f"Connection closed for React client: {client_id}")
                 del connected_react_clients[client_id]
             break
-
 
 
 async def main():
