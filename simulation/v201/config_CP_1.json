@@ -1,0 +1,31 @@
+{
+    "boot_notification": {
+        "reason": "PowerUp",
+        "charging_station": {
+            "model": "S-Line 1",
+            "vendor_name": "Alphen"
+        }
+    },
+    "status_notification": {
+        "connector_status": "Occupied",
+        "evse_id": 1,
+        "connector_id": 1
+    },
+    "meter_values": {
+        "evse_id": 1,
+        "values": [
+            {
+                "value": 88.5,
+                "measurand": "Energy.Active.Import.Register",
+                "unit_of_measure": {
+                    "unit": "Wh",
+                    "multiplier": 0
+                },
+                "location": "Outlet",
+                "context": "Sample.Periodic",
+                "transactionId": "1" 
+            }
+        ]
+    },
+    "transaction_active": false
+}

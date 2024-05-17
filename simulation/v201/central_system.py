@@ -20,6 +20,14 @@ async def forward_message_to_react_clients(message):
     for rc_ws in connected_react_clients.values():
         await rc_ws.send(message)
 
+async def forward_stop_transaction(station_id):
+    # Forward the stop transaction message to the corresponding charging point
+    cp_ws = connected_charge_points.get(station_id)
+    if cp_ws:
+        await cp_ws.send('{"messageType": "StopTransaction"}')
+    else:
+        logging.warning(f"No connected charging point found for station ID: {station_id}")
+
 class ChargePoint(cp):
     @on('BootNotification')
     async def on_boot_notification(self, charging_station, reason, **kwargs):
@@ -52,7 +60,6 @@ class ChargePoint(cp):
             "meterValues": meter_value
         }
         
-
         json_string = json.dumps(json_data)
         
         # Forward the message to React clients
@@ -83,8 +90,10 @@ class ChargePoint(cp):
 
     @on("StopTransaction")
     async def on_stop_transaction(self):
+        # Implement logic to stop the transaction for the charge point
+        logging.info(f"Received StopTransaction from Charge Point {self.id}")
+        # Perform actions to stop the transaction, e.g., send confirmation
         return call_result.RequestStopTransaction()
-        
 
 async def on_connect(websocket, path):
     try:
@@ -134,6 +143,9 @@ async def on_connect(websocket, path):
                     await cp_ws.send(f"From RC {sender_client_id}: {message}")
                 else:
                     logging.warning(f"No connected charging point found for RC {sender_client_id}")
+                    
+            # Log the received message
+            logging.info(f"Received message from {sender_client_id}: {message}")
 
         except websockets.exceptions.ConnectionClosed:
             if client_type == 'CP':

@@ -79,10 +79,22 @@ const ChargingPoints = () => {
     };
   }, [chargingStations]);
 
-  const handleStopTransaction = (stationId) => {
-    // Implement logic to send a message to stop transaction for the given station
-    console.log(`Stopping transaction for station ${stationId}`);
+  const getTransactionIdForStation = (stationId) => {
+    // Assuming you have a mapping of station IDs to transaction IDs stored in the component state
+    const station = chargingStations[stationId];
+    return station && station.transactionId ? station.transactionId : null;
   };
+
+  const handleStopTransaction = (stationId) => {
+    const stopTransactionRequest = {
+      messageType: 'StopTransaction',
+      transactionId: stationId, // Assuming stationId corresponds to the transactionId
+    };
+  
+    console.log('Sending stop transaction request:', stopTransactionRequest); // Log the message
+    webSocketService.send(stopTransactionRequest); // Send the stop transaction request to the CSMS
+  };
+  
 
   console.log('Charging stations:', chargingStations);
 
@@ -90,24 +102,25 @@ const ChargingPoints = () => {
     <div>
       <h2>Active Charging Stations</h2>
       <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-        {Object.values(chargingStations).map(station => (
-          <div key={station.id} style={{ border: '1px solid black', padding: '10px', margin: '10px' }}>
-            <h3>Charge Point: {station.id}</h3>
-            <p>Status: {station.connected ? 'Connected' : 'Disconnected'}</p>
-            <p>Connector Status: {station.connectorStatus}</p>
-            {station.meterValues && (
-              <div>
-                {station.meterValues.map((value, index) => (
-                  <div key={index}>
-                    <p>Timestamp: {formatTime(value.timestamp)}</p>
-                    <p>Value: {value.value} {value.unitOfMeasure}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-            <button onClick={() => handleStopTransaction(station.id)}>Stop Transaction</button>
+      {Object.values(chargingStations).map(station => (
+  <div key={station.id} style={{ border: '1px solid black', padding: '10px', margin: '10px' }}>
+    <h3>Charge Point: {station.id}</h3>
+    <p>Status of charging pole: {station.connected ? 'Connected' : 'Disconnected'}</p>
+    <p>Connector Status: {station.connectorStatus}</p>
+    {station.meterValues && (
+      <div>
+        {station.meterValues.map((value, index) => (
+          <div key={index}> {/* Use index as key temporarily */}
+            <p>Timestamp: {formatTime(value.timestamp)}</p>
+            <p>Value: {value.value} {value.unitOfMeasure}</p>
           </div>
         ))}
+      </div>
+    )}
+    <button onClick={() => handleStopTransaction(station.id)}>Stop Transaction</button>
+  </div>
+))}
+
       </div>
       <h3>Total Consumed Energy: {totalConsumed} Wh</h3>
     </div>
