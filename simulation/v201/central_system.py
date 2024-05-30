@@ -11,7 +11,6 @@ from ocpp.v201.enums import RegistrationStatusType
 
 logging.basicConfig(level=logging.INFO)
 
-# Maintain dictionaries to store connected clients
 connected_charge_points = {}
 connected_react_clients = {}
 
@@ -59,10 +58,9 @@ class ChargePoint(cp):
             "stationId": self.id,
             "meterValues": meter_value
         }
-        
+
         json_string = json.dumps(json_data)
-        
-        # Forward the message to React clients
+
         await forward_message_to_react_clients(json_string)
         
         return call_result.MeterValues()
@@ -82,17 +80,16 @@ class ChargePoint(cp):
         }
 
         json_string = json.dumps(json_data)
-        
-        # Forward the message to React clients
+
         await forward_message_to_react_clients(json_string)
 
         return call_result.StatusNotification()
 
     @on("StopTransaction")
     async def on_stop_transaction(self):
-        # Implement logic to stop the transaction for the charge point
+
         logging.info(f"Received StopTransaction from Charge Point {self.id}")
-        # Perform actions to stop the transaction, e.g., send confirmation
+
         return call_result.RequestStopTransaction()
 
 async def on_connect(websocket, path):
@@ -111,7 +108,7 @@ async def on_connect(websocket, path):
                         requested_protocols)
         return await websocket.close()
 
-    # Extract client type and client ID from the path
+
     path_components = path.strip('/').split('_')
     if len(path_components) != 2:
         logging.error("Invalid path format. Closing connection.")
@@ -132,11 +129,10 @@ async def on_connect(websocket, path):
             message = await websocket.recv()
             sender_client_id = client_id if client_type == 'CP' else f"RC_{client_id}"
             if client_type == 'CP':
-                # Forward message to React clients
+
                 for rc_ws in connected_react_clients.values():
                     await rc_ws.send(f"From CP {sender_client_id}: {message}")
-            else:  # React client
-                # Forward message to charging point clients
+            else:
                 cp_id = sender_client_id.split('_')[1]
                 cp_ws = connected_charge_points.get(cp_id)
                 if cp_ws:
@@ -144,7 +140,6 @@ async def on_connect(websocket, path):
                 else:
                     logging.warning(f"No connected charging point found for RC {sender_client_id}")
                     
-            # Log the received message
             logging.info(f"Received message from {sender_client_id}: {message}")
 
         except websockets.exceptions.ConnectionClosed:
