@@ -13,8 +13,7 @@ For the charging points run the charge_point.py files according to how many char
 For the frontend React client please navigate to the csms-dashboard directory and run the following commands: \
 `npm install` to install dependencies. \
 `npm start` to build the application. \
-You should be able to consult the application on `http://localhost:3000`. \
-
+You should be able to consult the application on `http://localhost:3000`.
 
 
 
