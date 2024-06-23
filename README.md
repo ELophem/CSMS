@@ -10,10 +10,10 @@ To start the simulator with the command lines please navigate to the simulation\
 Run the central_system.py file that will act as the central management system. 
 For the charging points run the charge_point.py files according to how many charging stations you want to have in your simulation.
 
-For the frontend React client please navigate to the csms-dashboard directory and run the following commands:
-`npm install` to install dependencies.
-`npm start` to build the application.
-You should be able to consult the application on `http://localhost:3000`
+For the frontend React client please navigate to the csms-dashboard directory and run the following commands: \
+`npm install` to install dependencies. \
+`npm start` to build the application. \
+You should be able to consult the application on `http://localhost:3000`. \
 
 
 
