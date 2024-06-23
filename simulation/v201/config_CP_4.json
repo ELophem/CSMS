@@ -18,7 +18,7 @@
                 "value": 0,
                 "measurand": "Energy.Active.Import.Register",
                 "unit_of_measure": {
-                    "unit": "Wh",
+                    "unit": "kW",
                     "multiplier": 0
                 },
                 "location": "Outlet",

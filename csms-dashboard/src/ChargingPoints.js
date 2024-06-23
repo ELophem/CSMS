@@ -79,20 +79,19 @@ const ChargingPoints = () => {
     };
   }, [chargingStations]);
 
-  const getTransactionIdForStation = (stationId) => {
-    // Assuming you have a mapping of station IDs to transaction IDs stored in the component state
-    const station = chargingStations[stationId];
-    return station && station.transactionId ? station.transactionId : null;
-  };
+//  const getTransactionIdForStation = (stationId) => {
+//    const station = chargingStations[stationId];
+//   return station && station.transactionId ? station.transactionId : null;
+//  };
 
   const handleStopTransaction = (stationId) => {
     const stopTransactionRequest = {
       messageType: 'StopTransaction',
-      transactionId: stationId, // Assuming stationId corresponds to the transactionId
+      transactionId: stationId, 
     };
   
-    console.log('Sending stop transaction request:', stopTransactionRequest); // Log the message
-    webSocketService.send(stopTransactionRequest); // Send the stop transaction request to the CSMS
+    console.log('Sending stop transaction request:', stopTransactionRequest); 
+    webSocketService.send(stopTransactionRequest); 
   };
   
 
@@ -122,7 +121,7 @@ const ChargingPoints = () => {
 ))}
 
       </div>
-      <h3>Total Consumed Energy: {totalConsumed} Wh</h3>
+      <h3>Total Consumed Energy: {totalConsumed} kW</h3>
     </div>
   );
 };

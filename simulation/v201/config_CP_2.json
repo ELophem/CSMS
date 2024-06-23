@@ -15,10 +15,10 @@
         "evse_id": 2,
         "values": [
             {
-                "value": 80.5,
+                "value": 11.5,
                 "measurand": "Energy.Active.Import.Register",
                 "unit_of_measure": {
-                    "unit": "Wh",
+                    "unit": "kW",
                     "multiplier": 0
                 },
                 "location": "Outlet",
