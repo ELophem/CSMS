@@ -15,7 +15,7 @@
         "evse_id": 1,
         "values": [
             {
-                "value": 11.2,
+                "value": 11.5,
                 "measurand": "Energy.Active.Import.Register",
                 "unit_of_measure": {
                     "unit": "kW",
